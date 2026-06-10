@@ -12,4 +12,9 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // When deploying to Netlify outside of Lovable sandbox, force the netlify preset.
+  // NITRO_PRESET env var set in netlify.toml also triggers auto-detection.
+  nitro: {
+    preset: "netlify",
+  },
 });
