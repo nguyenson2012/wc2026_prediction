@@ -15,6 +15,7 @@ type Match = {
   id: string; home_team: string; away_team: string;
   home_flag: string | null; away_flag: string | null;
   kickoff_at: string; stadium: string | null; stage: string;
+  group_name: string | null;
   home_score: number | null; away_score: number | null; is_finished: boolean;
 };
 
@@ -242,7 +243,7 @@ function TodayPage() {
                         <div key={m.id} className="bg-pitch-surface rounded-2xl border border-border overflow-hidden opacity-90">
                           <div className="bg-white/5 px-4 py-2 flex justify-between items-center">
                             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                              {stageLabel(m.stage)} • {timeStr(new Date(m.kickoff_at))} {m.stadium ? `• ${m.stadium}` : ""}
+                              {m.stage === "group" && m.group_name ? m.group_name : stageLabel(m.stage)} • {timeStr(new Date(m.kickoff_at))} {m.stadium ? `• ${m.stadium}` : ""}
                             </span>
                             <span className="text-[9px] font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20 uppercase tracking-wider">
                               Upcoming
@@ -289,7 +290,7 @@ function TodayPage() {
                     <div key={m.id} className="bg-pitch-surface rounded-2xl border border-border overflow-hidden">
                       <div className="bg-white/5 px-4 py-2 flex justify-between items-center">
                         <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                          {stageLabel(m.stage)} • {timeStr(new Date(m.kickoff_at))} {m.stadium ? `• ${m.stadium}` : ""}
+                          {m.stage === "group" && m.group_name ? m.group_name : stageLabel(m.stage)} • {timeStr(new Date(m.kickoff_at))} {m.stadium ? `• ${m.stadium}` : ""}
                         </span>
                         <StatusBadge isFinished={isFinished} locked={matchLocked} />
                       </div>
@@ -360,7 +361,7 @@ function TodayPage() {
                             {timeStr(new Date(m.kickoff_at))}
                           </span>
                           <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">
-                            {stageLabel(m.stage)}
+                            {m.stage === "group" && m.group_name ? m.group_name : stageLabel(m.stage)}
                           </span>
                         </div>
 

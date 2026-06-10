@@ -59,6 +59,7 @@ function NoPermissionPage() {
 type Match = {
   id: string; home_team: string; away_team: string; home_flag: string | null; away_flag: string | null;
   kickoff_at: string; stadium: string | null; stage: string;
+  group_name: string | null;
   home_score: number | null; away_score: number | null; is_finished: boolean;
 };
 
@@ -76,14 +77,19 @@ function AdminPage() {
   });
 
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState<{ home_team: string; away_team: string; home_flag: string; away_flag: string; kickoff_at: string; stadium: string; stage: typeof STAGES[number] }>({ home_team: "", away_team: "", home_flag: "🏳️", away_flag: "🏳️", kickoff_at: "", stadium: "", stage: "group" });
+  const [form, setForm] = useState<{ home_team: string; away_team: string; home_flag: string; away_flag: string; kickoff_at: string; stadium: string; stage: typeof STAGES[number]; group_name: string }>({ home_team: "", away_team: "", home_flag: "🏳️", away_flag: "🏳️", kickoff_at: "", stadium: "", stage: "group", group_name: "" });
 
   const create = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("matches").insert({
-        ...form,
-        stage: form.stage as typeof STAGES[number],
+        home_team: form.home_team,
+        away_team: form.away_team,
+        home_flag: form.home_flag,
+        away_flag: form.away_flag,
         kickoff_at: new Date(form.kickoff_at).toISOString(),
+        stadium: form.stadium || null,
+        stage: form.stage,
+        group_name: form.stage === "group" && form.group_name.trim() !== "" ? form.group_name.trim() : null,
       });
       if (error) throw error;
     },
@@ -124,6 +130,9 @@ function AdminPage() {
               {STAGES.map((s) => <option key={s} value={s}>{stageLabel(s)}</option>)}
             </select>
           </label>
+          {form.stage === "group" && (
+            <Input label="Group Name (e.g. Group A)" value={form.group_name} onChange={(v) => setForm({ ...form, group_name: v })} required />
+          )}
           <button type="submit" disabled={create.isPending} className="md:col-span-2 rounded-xl bg-grass text-pitch-dark font-black py-3 disabled:opacity-50">
             {create.isPending ? "Adding…" : "Add match"}
           </button>
@@ -167,7 +176,9 @@ function AdminMatchRow({ m }: { m: Match }) {
   return (
     <div className="bg-pitch-surface rounded-2xl border border-border p-4 md:p-5 grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
       <div className="md:col-span-4">
-        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{stageLabel(m.stage)}</p>
+        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+          {m.stage === "group" && m.group_name ? m.group_name : stageLabel(m.stage)}
+        </p>
         <p className="font-bold mt-1 flex items-center gap-1.5 flex-wrap">
           <FlagImg flag={m.home_flag} /> {m.home_team}
           <span className="text-muted-foreground">vs</span>
