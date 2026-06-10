@@ -12,7 +12,7 @@ type Row = {
   id: string; home_score: number; away_score: number; points: number; created_at: string;
   match: {
     id: string; home_team: string; away_team: string; home_flag: string | null; away_flag: string | null;
-    kickoff_at: string; stage: string; home_score: number | null; away_score: number | null; is_finished: boolean;
+    kickoff_at: string; stage: string; group_name: string | null; home_score: number | null; away_score: number | null; is_finished: boolean;
   } | null;
 };
 
@@ -24,7 +24,7 @@ function PredictionsPage() {
       if (!u.user) return [];
       const { data, error } = await supabase
         .from("predictions")
-        .select("id,home_score,away_score,points,created_at,match:matches(id,home_team,away_team,home_flag,away_flag,kickoff_at,stage,home_score,away_score,is_finished)")
+        .select("id,home_score,away_score,points,created_at,match:matches(id,home_team,away_team,home_flag,away_flag,kickoff_at,stage,group_name,home_score,away_score,is_finished)")
         .eq("user_id", u.user.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -63,7 +63,7 @@ function PredictionsPage() {
             return (
               <div key={r.id} className="bg-pitch-surface rounded-2xl border border-border p-4 md:p-5 flex flex-wrap items-center gap-4">
                 <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest w-full md:w-auto">
-                  {stageLabel(m.stage)} • {new Date(m.kickoff_at).toLocaleDateString()}
+                  {m.stage === "group" && m.group_name ? m.group_name : stageLabel(m.stage)} • {new Date(m.kickoff_at).toLocaleDateString()}
                 </div>
                 <div className="flex-1 flex items-center justify-center gap-3 min-w-0">
                   <span className="text-right flex-1 truncate"><span className="mr-2">{m.home_flag}</span>{m.home_team}</span>
