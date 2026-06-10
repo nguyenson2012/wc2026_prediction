@@ -1,20 +1,60 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, redirect, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { stageLabel } from "@/lib/match-utils";
+import { ShieldOff, ArrowLeft } from "lucide-react";
+
+function FlagImg({ flag }: { flag: string | null }) {
+  if (flag?.startsWith("http")) {
+    return <img src={flag} alt="" className="size-6 object-contain rounded-sm inline-block" loading="lazy" />;
+  }
+  return <span>{flag ?? ""}</span>;
+}
 
 export const Route = createFileRoute("/_authenticated/admin")({
   ssr: false,
-  beforeLoad: async () => {
+  loader: async () => {
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) throw redirect({ to: "/auth" });
-    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", u.user.id);
-    if (!roles?.some((r) => r.role === "admin")) throw redirect({ to: "/today" });
+    const { data: isAdmin } = await supabase.rpc("has_role", { _role: "admin", _user_id: u.user.id });
+    return { isAdmin: isAdmin === true };
   },
-  component: AdminPage,
+  component: AdminRoute,
 });
+
+function AdminRoute() {
+  const { isAdmin } = Route.useLoaderData();
+  if (!isAdmin) return <NoPermissionPage />;
+  return <AdminPage />;
+}
+
+function NoPermissionPage() {
+  return (
+    <div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4">
+      <div className="relative mb-6">
+        <div className="size-24 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+          <ShieldOff className="size-10 text-red-400" />
+        </div>
+        <div className="absolute -top-1 -right-1 size-5 rounded-full bg-red-500 flex items-center justify-center">
+          <span className="text-white font-black text-[10px]">!</span>
+        </div>
+      </div>
+      <h2 className="text-2xl font-extrabold text-white mb-2">Access Denied</h2>
+      <p className="text-muted-foreground text-sm max-w-xs mb-6">
+        You don't have permission to view this page. This area is restricted to administrators only.
+      </p>
+      <Link
+        to="/today"
+        className="inline-flex items-center gap-2 rounded-xl bg-white/5 border border-white/10 px-5 py-2.5 text-sm font-bold text-white hover:bg-white/10 hover:border-white/20 transition"
+      >
+        <ArrowLeft className="size-4" />
+        Back to Today
+      </Link>
+    </div>
+  );
+}
 
 type Match = {
   id: string; home_team: string; away_team: string; home_flag: string | null; away_flag: string | null;
@@ -128,7 +168,11 @@ function AdminMatchRow({ m }: { m: Match }) {
     <div className="bg-pitch-surface rounded-2xl border border-border p-4 md:p-5 grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
       <div className="md:col-span-4">
         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{stageLabel(m.stage)}</p>
-        <p className="font-bold mt-1">{m.home_flag} {m.home_team} <span className="text-muted-foreground">vs</span> {m.away_team} {m.away_flag}</p>
+        <p className="font-bold mt-1 flex items-center gap-1.5 flex-wrap">
+          <FlagImg flag={m.home_flag} /> {m.home_team}
+          <span className="text-muted-foreground">vs</span>
+          {m.away_team} <FlagImg flag={m.away_flag} />
+        </p>
         <p className="text-xs text-muted-foreground">{m.stadium}</p>
       </div>
       <div className="md:col-span-4 flex items-end gap-2">

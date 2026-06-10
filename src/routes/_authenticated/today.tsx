@@ -368,7 +368,7 @@ function TodayPage() {
                         <div className="flex-1 flex items-center justify-center gap-3 min-w-0">
                           <div className="flex-1 flex items-center justify-end gap-2.5 min-w-0">
                             <span className="font-bold text-xs md:text-sm text-right truncate text-white/90">{m.home_team}</span>
-                            <span className="text-xl shrink-0">{m.home_flag ?? "⚽"}</span>
+                            <FlagImg flag={m.home_flag} size="sm" />
                           </div>
 
                           {/* Score or VS */}
@@ -385,7 +385,7 @@ function TodayPage() {
                           </div>
 
                           <div className="flex-1 flex items-center justify-start gap-2.5 min-w-0">
-                            <span className="text-xl shrink-0">{m.away_flag ?? "⚽"}</span>
+                            <FlagImg flag={m.away_flag} size="sm" />
                             <span className="font-bold text-xs md:text-sm text-left truncate text-white/90">{m.away_team}</span>
                           </div>
                         </div>
@@ -449,10 +449,28 @@ function StatusBadge({ isFinished, locked }: { isFinished: boolean; locked: bool
   return <span className="text-[10px] font-bold text-grass uppercase flex items-center gap-1"><span className="size-1.5 bg-grass rounded-full animate-pulse" /> Open</span>;
 }
 
+function FlagImg({ flag, size = "md" }: { flag: string | null; size?: "sm" | "md" | "lg" }) {
+  const sizeClass = size === "lg" ? "size-12" : size === "sm" ? "size-5" : "size-8";
+  const isUrl = flag?.startsWith("http");
+  if (isUrl) {
+    return (
+      <img
+        src={flag!}
+        alt=""
+        className={`${sizeClass} object-contain rounded-sm`}
+        loading="lazy"
+      />
+    );
+  }
+  return <span className={size === "lg" ? "text-3xl" : size === "sm" ? "text-base" : "text-2xl"}>{flag ?? "⚽"}</span>;
+}
+
 function TeamSide({ name, flag }: { name: string; flag: string | null }) {
   return (
     <div className="flex flex-col items-center gap-2 w-1/3 min-w-0">
-      <div className="size-12 rounded-full bg-pitch-elevated grid place-items-center text-2xl shadow-lg">{flag ?? "⚽"}</div>
+      <div className="size-12 rounded-full bg-pitch-elevated grid place-items-center shadow-lg overflow-hidden">
+        <FlagImg flag={flag} size="md" />
+      </div>
       <span className="font-bold text-sm text-center truncate w-full">{name}</span>
     </div>
   );
@@ -501,7 +519,11 @@ function NextMatchCard({ now }: { now: Date }) {
   return (
     <div className="bg-pitch-surface rounded-2xl border border-border p-6">
       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Up Next</p>
-      <p className="text-xl font-extrabold mt-2">{next.home_flag} {next.home_team} vs {next.away_team} {next.away_flag}</p>
+      <p className="text-xl font-extrabold mt-2 flex items-center gap-2 flex-wrap">
+        <FlagImg flag={next.home_flag} size="sm" />
+        {next.home_team} vs {next.away_team}
+        <FlagImg flag={next.away_flag} size="sm" />
+      </p>
       <p className="text-sm text-muted-foreground mt-1">{new Date(next.kickoff_at).toLocaleString()}</p>
       {next.stadium && <p className="text-xs text-muted-foreground mt-1">{next.stadium}</p>}
     </div>

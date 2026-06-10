@@ -7,7 +7,6 @@ import { toast } from "sonner";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<{ display_name: string; avatar_url: string | null } | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -29,12 +28,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   async function loadProfile() {
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) return;
-    const [{ data: p }, { data: roles }] = await Promise.all([
+    const [{ data: p }, { data: adminFlag, error: roleError }] = await Promise.all([
       supabase.from("profiles").select("display_name,avatar_url").eq("id", u.user.id).maybeSingle(),
-      supabase.from("user_roles").select("role").eq("user_id", u.user.id),
+      supabase.rpc("has_role", { _role: "admin", _user_id: u.user.id }),
     ]);
+    if (roleError) console.error("[AppShell] has_role error:", roleError);
     setProfile(p);
-    setIsAdmin(!!roles?.some((r) => r.role === "admin"));
   }
 
   useEffect(() => { loadProfile(); }, []);
@@ -50,7 +49,6 @@ export function AppShell({ children }: { children: ReactNode }) {
     { to: "/today", label: "Today", Icon: Calendar },
     { to: "/leaderboard", label: "Leaderboard", Icon: Trophy },
     { to: "/predictions", label: "History", Icon: ClipboardList },
-    ...(isAdmin ? [{ to: "/admin", label: "Admin", Icon: Settings }] : []),
   ] as const;
 
   return (
